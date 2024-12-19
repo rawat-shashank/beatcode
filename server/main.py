@@ -8,6 +8,8 @@ from app import app
 origins = [
     "http://localhost:5173",  # Allow requests from your SvelteKit frontend
     "http://127.0.0.1:5173", # Allow requests from your SvelteKit frontend
+    "http://localhost:4173",  # Allow requests from your SvelteKit frontend
+    "http://127.0.0.1:4173", # Allow requests from your SvelteKit frontend
 ]
 
 app.add_middleware(
