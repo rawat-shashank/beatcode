@@ -16,5 +16,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: build # Path to your pre-built folder
+          folder: beatcode/build # Path to your pre-built folder
           clean: true
