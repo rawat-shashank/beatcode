@@ -19,7 +19,7 @@ const config = {
 		    strict: true
 		}),
 		paths: {
-			base: process.env.NODE_ENV === 'development' ? '/the-boring-guy' :'',
+			base: process.env.NODE_ENV === 'development' ? '/beatcode' :'',
 		}
 	}
 };
