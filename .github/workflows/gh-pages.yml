@@ -16,5 +16,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: frontend/build # Path to your pre-built folder
+          folder: build # Path to your pre-built folder
           clean: true
