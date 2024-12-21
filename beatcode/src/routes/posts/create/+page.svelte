@@ -66,16 +66,17 @@
 
 <form on:submit|preventDefault={handleSubmit}>
 	<label for="title">Title:</label><br />
-	<input type="text" id="title" bind:value={title} required /><br /><br />
+	<input class="border-2" type="text" id="title" bind:value={title} required /><br /><br />
 
 	<label for="subtitle">Subtitle:</label><br />
-	<input type="text" id="subtitle" bind:value={subtitle} /><br /><br />
+	<input class="border-2" type="text" id="subtitle" bind:value={subtitle} /><br /><br />
 
 	<label for="content">Content:</label><br />
 	<textarea id="content" bind:value={content}></textarea><br /><br />
 
 	<label for="image">Image:</label><br />
-	<input type="file" id="image" accept="image/*" on:change={handleFileChange} /><br /><br />
+	<input class="border-2" type="file" id="image" accept="image/*" on:change={handleFileChange} /><br
+	/><br />
 
 	<button type="submit" disabled={loading}>
 		{#if loading}Creating...{:else}Create Post{/if}
