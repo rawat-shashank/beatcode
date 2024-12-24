@@ -1,42 +1,11 @@
-import sqlite3
-from app.config import settings
+import os
+from sqlmodel import create_engine, Session, SQLModel
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+engine = create_engine(f"sqlite:///{BASE_DIR}/sqlite3.db", echo=True)
+SQLModel.metadata.create_all(engine)
 
 
-conn = sqlite3.connect(settings.database_url, check_same_thread=False)
-cursor = conn.cursor()
-
-
-def create_tables():
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        subtitle TEXT,
-        content TEXT,
-        base64_image TEXT
-    )
-    """
-    )
-
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        role TEXT NOT NULL CHECK (role IN ('admin', 'author'))
-    )
-    """
-    )
-    conn.commit()
-
-
-create_tables()  # Create tables on startup
-
-
-def get_db():
-    try:
-        yield cursor, conn
-    finally:
-        pass
+def get_session():
+    with Session(engine) as session:
+        yield session

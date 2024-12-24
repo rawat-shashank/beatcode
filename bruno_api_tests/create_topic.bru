@@ -1,0 +1,17 @@
+meta {
+  name: create_topic
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{base_url}}/topics
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "topic": "array"
+  }
+}
