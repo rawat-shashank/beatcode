@@ -1,1 +1,1 @@
-{"type":"data","nodes":[{"type":"data","data":[{}],"uses":{}},{"type":"data","data":[{"post":1},{"id":2,"title":3,"subtitle":3,"content":3,"base64_image":4},1,"first post",""],"uses":{"params":["id"]}}]}
+{"type":"data","nodes":[{"type":"data","data":[{}],"uses":{}},{"type":"data","data":[{"post":1},{"id":2,"title":3,"subtitle":3,"content":4,"base64_image":5},1,"asdf","sadf",""],"uses":{"params":["id"]}}]}
