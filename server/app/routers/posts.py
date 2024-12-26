@@ -59,7 +59,7 @@ def update_post(post_id: int, post_update: PostUpdate, db: Session = Depends(get
             status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
         )
 
-    for key, value in post_update.dict(exclude_unset=True).items():
+    for key, value in post_update.model_dump(exclude_unset=True).items():
         if key == "input_constraints":
             db_post.input_constraints.clear()
             if value:

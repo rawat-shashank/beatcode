@@ -2,8 +2,6 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-# You MUST define these elsewhere (database setup, models, schemas)
-# I am ONLY showing the route logic and direct db interaction
 from ..database import get_db
 from ..models.topics import Topic
 from ..schemas.topics import TopicCreate, TopicSchema
@@ -13,7 +11,7 @@ router = APIRouter(prefix="/topics", tags=["topics"])
 
 @router.post("/", response_model=TopicSchema, status_code=status.HTTP_201_CREATED)
 def create_topic(topic: TopicCreate, db: Session = Depends(get_db)):
-    db_topic = Topic(**topic.dict())
+    db_topic = Topic(**topic.model_dump())
     db.add(db_topic)
     try:
         db.commit()
@@ -48,7 +46,7 @@ def update_topic(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Topic not found"
         )
-    for key, value in topic_update.dict(exclude_unset=True).items():
+    for key, value in topic_update.model_dump(exclude_unset=True).items():
         setattr(db_topic, key, value)
     try:
         db.commit()
@@ -71,3 +69,11 @@ def delete_topic(topic_id: int, db: Session = Depends(get_db)):
             db.rollback()
             raise HTTPException(status_code=500, detail=f"Error deleting topic: {e}")
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Topic not found")
+
+@router.get("/{topic_id}/posts", status_code=status.HTTP_200_OK)
+def get_topic_posts(topic_id: int, db: Session = Depends(get_db)):
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    posts = []
+    if topic:
+        posts = topic.posts
+    return posts
