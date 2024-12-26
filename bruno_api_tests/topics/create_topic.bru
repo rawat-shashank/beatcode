@@ -1,7 +1,7 @@
 meta {
   name: create_topic
   type: http
-  seq: 2
+  seq: 1
 }
 
 post {
@@ -10,8 +10,14 @@ post {
   auth: none
 }
 
-body:json {
-  {
-      "topic": "array"
-  }
+script:pre-request {
+  req.setBody({
+    topic: 'linked-list'
+  })
+}
+
+tests {
+  test("check status code", function() {
+    expect(res.getStatus()).to.equal(201); 
+  });
 }
