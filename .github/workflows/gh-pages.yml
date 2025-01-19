@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages (Pre-built)
 on:
   push:
     branches:
-      - release # or your default branch
+      - release
 
 jobs:
   deploy:
@@ -15,5 +15,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: build # Path to your pre-built folder
+          folder: beatcode/build
           clean: true
