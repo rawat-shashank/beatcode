@@ -21,7 +21,7 @@
 		<nav class="flex flex-wrap items-center justify-center text-base md:ml-auto">
 			{#each HEADER_NAV_LINKS as link}
 				<a
-					href={link.href}
+					href="{base}{link.href}"
 					class="mr-5 font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
 				>
 					{link.title}
