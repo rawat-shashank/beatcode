@@ -11,7 +11,7 @@
 
 <header>
 	<div class="container mx-auto flex flex-col flex-wrap items-center p-5 md:flex-row lg:w-4/6">
-		<a href="{base}/" class="title-font mb-4 flex items-center font-medium md:mb-0 {theme.accent}">
+		<a href="/" class="title-font mb-4 flex items-center font-medium md:mb-0 {theme.accent}">
 			{#if Logo}
 				<Logo className="h-14 w-14 {theme.accent}" />
 			{/if}
@@ -21,7 +21,7 @@
 		<nav class="flex flex-wrap items-center justify-center text-base md:ml-auto">
 			{#each HEADER_NAV_LINKS as link}
 				<a
-					href="{base}{link.href}"
+					href={link.href}
 					class="mr-5 font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
 				>
 					{link.title}
