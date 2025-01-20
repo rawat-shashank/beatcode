@@ -11,7 +11,7 @@
 
 <header>
 	<div class="container mx-auto flex flex-col flex-wrap items-center p-5 md:flex-row lg:w-4/6">
-		<a href="/" class="title-font mb-4 flex items-center font-medium md:mb-0 {theme.accent}">
+		<a href="{base}/" class="title-font mb-4 flex items-center font-medium md:mb-0 {theme.accent}">
 			{#if Logo}
 				<Logo className="h-14 w-14 {theme.accent}" />
 			{/if}
