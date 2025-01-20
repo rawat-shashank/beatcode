@@ -13,10 +13,10 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			pages: 'build',
-            assets: 'build',
+			assets: 'build'
 		}),
 		paths: {
-			base: process.env.NODE_ENV === 'development' ? '' : '/beatcode',
+			base: process.env.NODE_ENV === 'development' ? '' : '/beatcode'
 		},
 		prerender: {
 			handleHttpError: 'warn'

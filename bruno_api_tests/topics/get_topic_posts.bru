@@ -1,0 +1,11 @@
+meta {
+  name: get_topic_posts
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/topics/1/posts
+  body: json
+  auth: none
+}

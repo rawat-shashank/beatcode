@@ -1,77 +1,99 @@
-import sqlite3
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from typing import List
-from ..models.posts import Post
+
 from ..database import get_db
-from ..security import require_admin
+from ..schemas.posts import PostCreate, PostUpdate, PostSchema
+from ..models.posts import Post, InputConstraint, Example
+from ..models.topics import Topic
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
-@router.post("/", response_model=Post, status_code=status.HTTP_201_CREATED)
-async def create_post(post: Post, db: tuple = Depends(get_db)):
-    cursor, conn = db
-    try:
-        cursor.execute("""
-            INSERT INTO posts (title, subtitle, content, base64_image)
-            VALUES (?, ?, ?, ?)
-        """, (post.title, post.subtitle, post.content, post.base64_image))
-        conn.commit()
-        post.id = cursor.lastrowid
-        return post
-    except sqlite3.Error as e:
-        conn.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
 
-@router.get("/", response_model=List[Post])
-async def get_all_posts(db: tuple = Depends(get_db)):
-    cursor, conn = db
+@router.post("/", response_model=PostSchema, status_code=status.HTTP_201_CREATED)
+def create_post(post: PostCreate, db: Session = Depends(get_db)):
+    db_post = Post(
+        url=post.url,
+        title=post.title,
+        description=post.description,
+        difficulty=post.difficulty,
+    )
+    if post.input_constraints:
+        db_post.input_constraints = [
+            InputConstraint(**ic.model_dump(), post=db_post) for ic in post.input_constraints
+        ]
+    if post.examples:
+        db_post.examples = [Example(**ex.model_dump(), post=db_post) for ex in post.examples]
+    if post.topics:
+        db_post.topics = db.query(Topic).filter(Topic.id.in_(post.topics)).all()
+    db.add(db_post)
     try:
-        cursor.execute("SELECT * FROM posts")
-        rows = cursor.fetchall()
-        posts = [Post(id=row[0], title=row[1], subtitle=row[2], content=row[3], base64_image=row[4]) for row in rows]
-        return posts
-    except sqlite3.Error as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
+        db.commit()
+        db.refresh(db_post)
+        return db_post
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error creating post: {e}")
 
-@router.get("/{post_id}", response_model=Post)
-async def get_post(post_id: int, db: tuple = Depends(get_db)):
-    cursor, conn = db
-    try:
-        cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
-        row = cursor.fetchone()
-        if row:
-            post = Post(id=row[0], title=row[1], subtitle=row[2], content=row[3], base64_image=row[4])
-            return post
+
+@router.get("/", response_model=List[PostSchema])
+def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return db.query(Post).offset(skip).limit(limit).all()
+
+
+@router.get("/{post_id}", response_model=PostSchema)
+def read_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+    return post
+
+
+@router.put("/{post_id}", response_model=PostSchema)
+def update_post(post_id: int, post_update: PostUpdate, db: Session = Depends(get_db)):
+    db_post = db.query(Post).filter(Post.id == post_id).first()
+    if not db_post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
+
+    for key, value in post_update.model_dump(exclude_unset=True).items():
+        if key == "input_constraints":
+            db_post.input_constraints.clear()
+            if value:
+                db_post.input_constraints.extend(
+                    [InputConstraint(**ic.dict(), post=db_post) for ic in value]
+                )
+        elif key == "examples":
+            db_post.examples.clear()
+            if value:
+                db_post.examples.extend(
+                    [Example(**ex.dict(), post=db_post) for ex in value]
+                )
+        elif key == "topics":
+            db_post.topics = db.query(Topic).filter(Topic.id.in_(value)).all()
         else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    except sqlite3.Error as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
-
-@router.put("/{post_id}", response_model=Post)
-async def update_post(post_id: int, post: Post, db: tuple = Depends(get_db)):
-    cursor, conn = db
+            setattr(db_post, key, value)
     try:
-        cursor.execute("""
-            UPDATE posts SET title = ?, subtitle = ?, content = ?, base64_image = ?
-            WHERE id = ?
-        """, (post.title, post.subtitle, post.content, post.base64_image, post_id))
-        conn.commit()
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-        post.id = post_id
-        return post
-    except sqlite3.Error as e:
-        conn.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
+        db.commit()
+        db.refresh(db_post)
+        return db_post
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Error updating post: {e}")
+
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(post_id: int, db: tuple = Depends(get_db)):
-    cursor, conn = db
-    try:
-        cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
-        conn.commit()
-        if cursor.rowcount == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    except sqlite3.Error as e:
-        conn.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {e}")
+def delete_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post:
+        db.delete(post)
+        try:
+            db.commit()
+            return
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error deleting post: {e}")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")

@@ -1,12 +1,7 @@
 import type { Post } from '$lib/types';
 import type { PageServerLoad } from '../$types';
 
-let cachedPosts: Post[] | null = null;
-
 async function fetchPosts(): Promise<Post[]> {
-    if (cachedPosts) {
-        return cachedPosts;
-    }
 
     try {
         const res = await fetch('http://localhost:8000/posts');
@@ -14,9 +9,7 @@ async function fetchPosts(): Promise<Post[]> {
             console.error(`Failed to fetch posts: ${res.status} - ${await res.text()}`);
             return [];
         }
-        const response = await res.json()
-        cachedPosts = response;
-        return response;
+        return await res.json();
     } catch (error) {
         console.error("Error fetching posts:", error);
         return [];

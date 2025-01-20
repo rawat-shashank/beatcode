@@ -1,9 +1,11 @@
 # Compiled output
-/dist
-/out
-/target
-/node_modules
-/.svelte-kit
+build/
+*[!release]/build/
+dist/
+out/
+target/
+node_modules/
+.svelte-kit/
 .DS_Store
 *.swp
 *~
@@ -11,10 +13,18 @@
 *.tmp
 *.log
 
+# OS
+.DS_Store
+Thumbs.db
+
 # Environment files
 .env
 .env.*
 !.env.example # Keep the example file
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
 # Editor and IDE files
 .vscode/
