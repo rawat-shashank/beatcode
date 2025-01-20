@@ -16,7 +16,7 @@ const config = {
 			assets: 'build'
 		}),
 		paths: {
-			base: '/beatcode'
+			base: process.env.NODE_ENV === 'development' ? '' : '/beatcode'
 		},
 		prerender: {
 			handleHttpError: 'warn'
