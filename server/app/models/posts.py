@@ -1,7 +1,8 @@
+from operator import index
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from . import Base
-from enum import Enum as PyEnum
+from enum import Enum as PyEnum, unique
 
 
 class Difficulty(PyEnum):
@@ -31,6 +32,7 @@ class InputConstraint(Base):
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, index=True)
+    number = Column(Integer, unique=True, index=True)
     url = Column(String, unique=True, index=True)
     title = Column(String)
     description = Column(String)

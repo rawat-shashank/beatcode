@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Post } from '$lib/types';
 	import { base } from '$app/paths';
+	import Listing from '../../components/Posts/PostsListing.svelte';
+	import PostsListing from '../../components/Posts/PostsListing.svelte';
 
 	export let data: {
 		error: any;
@@ -8,12 +10,11 @@
 	};
 </script>
 
-<h1>Blog Posts</h1>
-
 {#if data.error}
 	<p style="color: red;">Error: {data.error.message}</p>
 {:else if data.posts}
-	<ul>
+	<PostsListing postsListingData={data.posts} />
+	<!-- <ul>
 		{#each data.posts as post}
 			<li>
 				<a href={`${base}/posts/${post.id}`}>
@@ -32,7 +33,7 @@
 				</a>
 			</li>
 		{/each}
-	</ul>
+	</ul> -->
 {:else}
 	<p>Loading posts...</p>
 {/if}

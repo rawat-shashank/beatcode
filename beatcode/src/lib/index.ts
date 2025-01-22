@@ -16,7 +16,16 @@ export const HEADER_NAV_LINKS = [
     //   { href: "/about", title: "About" },
 ];
 
-if (process.env.NODE_ENV === 'development') {
-    HEADER_NAV_LINKS.push({ href: '/admin', title: 'admin' });
+
+if (process.env.NODE_ENV === 'dev') {
+    HEADER_NAV_LINKS.push({ href: '/posts', title: 'Posts' });
 }
 
+export const isValidURL = (url: string): boolean => {
+    try {
+        new URL(url);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}

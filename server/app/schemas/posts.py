@@ -23,6 +23,7 @@ class InputConstraintCreate(BaseModel):
 class PostCreate(BaseModel):
     url: str
     title: str
+    number: int
     description: str
     difficulty: Difficulty
     input_constraints: Optional[List[InputConstraintCreate]] = None
@@ -33,6 +34,7 @@ class PostCreate(BaseModel):
 class PostUpdate(BaseModel):
     url: Optional[str] = None
     title: Optional[str] = None
+    number: Optional[int] = None
     description: Optional[str] = None
     difficulty: Optional[Difficulty] = None
     input_constraints: Optional[List[InputConstraintCreate]] = None
@@ -44,6 +46,7 @@ class PostSchema(BaseModel):
     id: int
     url: str
     title: str
+    number: int
     description: str
     difficulty: Difficulty
     input_constraints: Optional[List[InputConstraintCreate]] = None
