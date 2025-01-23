@@ -31,12 +31,12 @@ class InputConstraint(Base):
 
 class Post(Base):
     __tablename__ = "posts"
-    id = Column(Integer, primary_key=True, index=True)
-    number = Column(Integer, unique=True, index=True)
-    url = Column(String, unique=True, index=True)
-    title = Column(String)
-    description = Column(String)
-    difficulty = Column(Enum(Difficulty))
+    id = Column(Integer, primary_key=True, index=True, nullable=False)
+    number = Column(Integer, unique=True, index=True, nullable=False)
+    url = Column(String, unique=True, index=True, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    difficulty = Column(Enum(Difficulty), nullable=False)
     input_constraints = relationship(
         "InputConstraint", back_populates="post", cascade="all, delete-orphan"
     )

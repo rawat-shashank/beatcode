@@ -3,6 +3,8 @@
 	import { themes } from '$lib/theme/themes';
 	let open = false;
 
+	$: theme = themes[$currentTheme] || themes.default;
+
 	function handleThemeSelect(themeName: string) {
 		setTheme(themeName);
 	}
@@ -13,7 +15,7 @@
 		<button
 			type="button"
 			on:click={() => (open = !open)}
-			class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+			class="inline-flex w-full justify-center px-4 py-2 text-sm font-medium {theme.text}  transition-transform duration-200 hover:scale-110 focus:outline-none"
 			id="menu-button"
 			aria-expanded={open}
 			aria-haspopup="true"

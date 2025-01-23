@@ -1,157 +1,189 @@
 <script lang="ts">
-	import type { Post } from '$lib/types';
-	import { goto } from '$app/navigation';
-  
-	let title = '';
-	let description = '';
-	let url = '';
-	let inputConstraints: string[] = [];
-	let examples: { input: any; output: any; explanation?: string }[] = [];
-	let exampleInput = '';
-	let exampleOutput = '';
-	let exampleExplanation = '';
-	let currentExampleIndex = -1;
-	let error: string | null = null;
-	let loading = false;
-  
-	function addExample() {
-	  examples.push({
-		input: exampleInput,
-		output: exampleOutput,
-		explanation: exampleExplanation,
-	  });
-	  exampleInput = '';
-	  exampleOutput = '';
-	  exampleExplanation = '';
+	import { enhance } from '$app/forms';
+	import { currentTheme } from '$lib/theme/ThemeManager';
+	import { themes } from '$lib/theme/themes';
+	import { isValidURL } from '$lib';
+	import { Difficulty } from '$lib/types';
+	import Dropdown from '$components/Dropdown.svelte';
+	import type { SubmitFunction, ActionData } from './$types';
+
+	$: theme = themes[$currentTheme] || themes.default;
+	export let form: ActionData;
+
+	interface FormData {
+		number: string;
+		title: string;
+		url: string;
+		description: string;
+		difficulty: Difficulty;
+		input_constraint: string[];
+		examples: string[];
+		topics: number[];
 	}
-  
-	function editExample(index: number) {
-	  currentExampleIndex = index;
-	  const example = examples[index];
-	  exampleInput = example.input;
-	  exampleOutput = example.output;
-	  exampleExplanation = example.explanation || '';
-	}
-  
-	function saveExample() {
-	  if (currentExampleIndex !== -1) {
-		examples[currentExampleIndex] = {
-		  input: exampleInput,
-		  output: exampleOutput,
-		  explanation: exampleExplanation,
-		};
-		currentExampleIndex = -1;
-		exampleInput = '';
-		exampleOutput = '';
-		exampleExplanation = '';
-	  }
-	}
-  
-	function deleteExample(index: number) {
-	  examples = examples.filter((_, i) => i !== index);
-	}
-  
-	async function handleSubmit() {
-	  loading = true;
-	  error = null;
-  
-	  const newPost: Omit<Post, 'id'> = {
-		title,
-		description,
-		url,
-		input_constraints: inputConstraints,
-		examples,
-	  };
-  
-	  try {
-		const response = await fetch('http://localhost:8000/posts/', {
-		  method: 'POST',
-		  headers: {
-			'Content-Type': 'application/json',
-		  },
-		  body: JSON.stringify(newPost),
-		});
-  
-		if (!response.ok) {
-		  const errorData = await response.json();
-		  error = errorData.detail || `HTTP error ${response.status}`;
-		  throw new Error(error);
+
+	let formData: FormData = {
+		number: '',
+		title: '',
+		url: '',
+		description: '',
+		difficulty: Difficulty.Easy,
+		input_constraint: [],
+		examples: [],
+		topics: []
+	};
+
+	let errors: { [key in keyof FormData]?: string } = {};
+
+	function validateField(fieldName: keyof FormData) {
+		errors[fieldName] = undefined;
+
+		switch (fieldName) {
+			case 'number':
+				if (!formData.number.trim()) {
+					errors.number = `${fieldName} is required.`;
+				} else if (isNaN(Number(formData.number))) {
+					errors[fieldName] = `${fieldName} must be a number.`;
+				} else if (parseFloat(formData.number) !== Number(formData.number)) {
+					errors[fieldName] = `${fieldName} must be a valid number.`;
+				} else if (!Number.isInteger(Number(formData.number))) {
+					errors[fieldName] = `${fieldName} must be a integer.`;
+				}
+				break;
+			case 'title':
+				if (!formData.title.trim()) {
+					errors.title = `${fieldName} is required.`;
+				} else if (formData.title.length < 3) {
+					errors.title = `${fieldName} must be at least 3 characters.`;
+				}
+				break;
+			case 'url':
+				if (!formData.url.trim()) {
+					errors.url = `${fieldName} is required.`;
+				} else if (!isValidURL(formData.url)) {
+					errors.url = `Invalid ${fieldName}`;
+				}
+				break;
+			case 'description':
+				if (!formData.description.trim()) {
+					errors.description = 'Description is required.';
+				}
+				break;
 		}
-  
-		goto('/posts'); // Redirect to posts list
-	  } catch (err) {
-		console.error('Error creating post:', err);
-		error = 'An error occurred while creating the post.';
-	  } finally {
-		loading = false;
-	  }
 	}
+
+	function handleDropdownSelect(difficulty: Difficulty) {
+		formData.difficulty = difficulty;
+	}
+
+	const handleSubmit: SubmitFunction = () => {
+		for (const field in formData) {
+			validateField(field as keyof FormData);
+		}
+		return async ({ result, update }) => {
+			await update();
+			if (result.type === 'success') {
+				// Optionally reset the form
+			}
+			if (result.type === 'error') {
+				console.error(result.error.message);
+			}
+		};
+	};
+
+	// function handleSubmit() {
+	// 	for (const field in formData) {
+	// 		validateField(field as keyof FormData);
+	// 	}
+
+	// 	// if (Object.keys(errors).length === 0) {
+	// 	// 	formData = { number: '', title: '', url: '', description: '', difficulty: Difficulty.Easy }; // Reset form
+	// 	// }
+
+	// 	// handle form submission
+	// }
 </script>
 
-<h1>Create New Post</h1>
-
-{#if error}
-	<p style="color: red;">{error}</p>
-{/if}
-
-<form on:submit|preventDefault={handleSubmit}>
-	<label for="title">Title:</label><br />
-	<input class="border-2" type="text" id="title" bind:value={title} required /><br /><br />
-
-	<label for="description">Description:</label><br />
-	<textarea id="description" bind:value={description}></textarea><br /><br />
-
-	<label for="url">URL:</label><br />
-	<input class="border-2" type="url" id="url" bind:value={url} required /><br /><br />
-
-	<fieldset>
-		<legend>Input Constraints</legend>
-		{#each inputConstraints as constraint, index}
-			<div class="flex">
-				<input type="text" bind:value={inputConstraints[index]} />
-				<button
-					type="button"
-					on:click={() => (inputConstraints = inputConstraints.filter((_, i) => i !== index))}
-					>-</button
-				>
-			</div>
-		{/each}
-		<button type="button" on:click={() => (inputConstraints = [...inputConstraints, ''])}
-			>Add Constraint</button
-		>
-	</fieldset>
-	<br />
-	<fieldset>
-		<legend>Examples</legend>
-		{#each examples as example, index}
-			<div class="mb-2 border p-2">
-				<p><b>Example {index + 1}</b></p>
-				<p>Input: {JSON.stringify(example.input)}</p>
-				<p>Output: {JSON.stringify(example.output)}</p>
-				{#if example.explanation}<p>Explanation: {example.explanation}</p>{/if}
-				<button type="button" on:click={() => editExample(index)}>Edit</button>
-				<button type="button" on:click={() => deleteExample(index)}>Delete</button>
-			</div>
-		{/each}
-		<div class="border p-2">
-			<label for="exampleInput">Example Input:</label><br />
-			<input type="text" id="exampleInput" bind:value={exampleInput} /><br /><br />
-
-			<label for="exampleOutput">Example Output:</label><br />
-			<input type="text" id="exampleOutput" bind:value={exampleOutput} /><br /><br />
-
-			<label for="exampleExplanation">Example Explanation:</label><br />
-			<textarea id="exampleExplanation" bind:value={exampleExplanation}></textarea><br /><br />
-
-			{#if currentExampleIndex !== -1}
-				<button type="button" on:click={saveExample}>Save Example</button>
-			{:else}
-				<button type="button" on:click={addExample}>Add Example</button>
-			{/if}
+<form method="POST" action="?/create" use:enhance={handleSubmit}>
+	<div class="grid grid-cols-[3fr_9fr] gap-4">
+		<div>
+			<label for="number" class="block text-sm font-medium {theme.text}">Number:</label>
+			<input
+				type="text"
+				id="number"
+				bind:value={formData.number}
+				on:blur={() => validateField('number')}
+				class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			/>
+			{#if errors.number}<span class="mt-1 text-sm text-red-500">{errors.number}</span>{/if}
 		</div>
-	</fieldset>
+		<div>
+			<label for="title" class="block text-sm font-medium {theme.text}">Title:</label>
+			<input
+				type="text"
+				id="title"
+				bind:value={formData.title}
+				on:blur={() => validateField('title')}
+				class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			/>
+			{#if errors.title}<span class="mt-1 text-sm text-red-500">{errors.title}</span>{/if}
+		</div>
+	</div>
 
-	<button type="submit" disabled={loading}>
-		{#if loading}Creating...{:else}Create Post{/if}
+	<div>
+		<label for="url" class="block text-sm font-medium {theme.text} ">URL:</label>
+		<input
+			type="url"
+			id="url"
+			bind:value={formData.url}
+			on:blur={() => validateField('url')}
+			class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+		/>
+		{#if errors.url}<span class="mt-1 text-sm text-red-500">{errors.url}</span>{/if}
+	</div>
+
+	<div class="grid grid-cols-2 gap-4">
+		<div class="min-h-full">
+			<label for="description" class="block text-sm font-medium {theme.text}">Description:</label>
+			<textarea
+				id="description"
+				bind:value={formData.description}
+				on:blur={() => validateField('description')}
+				rows="5"
+				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			></textarea>
+			{#if errors.description}<span class="mt-1 text-sm text-red-500">{errors.description}</span
+				>{/if}
+		</div>
+		<div class="min-h-full">
+			<div>
+				<label for="difficulty" class="block text-sm font-medium {theme.text}">Difficulty:</label>
+				<Dropdown
+					id="difficulty"
+					items={Object.entries(Difficulty).map(([key, value]) => ({
+						name: key,
+						value: value
+					}))}
+					selected={formData.difficulty}
+					label="Select a fruit"
+					onSelect={handleDropdownSelect}
+				/>
+			</div>
+			<div>
+				<label for="topics" class="block text-sm font-medium {theme.text} ">Topics:</label>
+				<input
+					type="text"
+					id="topics"
+					bind:value={formData.topics}
+					class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<button
+		type="submit"
+		class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+	>
+		Submit
 	</button>
 </form>

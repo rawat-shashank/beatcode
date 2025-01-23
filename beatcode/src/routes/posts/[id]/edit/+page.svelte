@@ -3,6 +3,7 @@
 	import { themes } from '$lib/theme/themes';
 	import { isValidURL } from '$lib';
 	import { Difficulty } from '$lib/types';
+	import Dropdown from '../../../../components/Dropdown.svelte';
 	$: theme = themes[$currentTheme] || themes.default;
 
 	interface FormData {
@@ -60,13 +61,17 @@
 		}
 	}
 
+	function handleDropdownSelect(difficulty: Difficulty) {
+		formData.difficulty = difficulty;
+	}
+
 	function handleSubmit() {
 		for (const field in formData) {
 			validateField(field as keyof FormData);
 		}
 
 		if (Object.keys(errors).length === 0) {
-			formData = { number: '', title: '', url: '', description: '' }; // Reset form
+			formData = { number: '', title: '', url: '', description: '', difficulty: Difficulty.Easy }; // Reset form
 		}
 
 		// handle form submission
@@ -126,15 +131,28 @@
 		</div>
 		<div class="min-h-full">
 			<div>
-				<label for="url" class="block text-sm font-medium {theme.text} ">URL:</label>
+				<label for="difficulty" class="block text-sm font-medium {theme.text}">Difficulty:</label>
+				<Dropdown
+					id="difficulty"
+					items={Object.entries(Difficulty).map(([key, value]) => ({
+						name: key,
+						value: value
+					}))}
+					selected={formData.difficulty}
+					label="Select a fruit"
+					onSelect={handleDropdownSelect}
+				/>
+
+				<!-- <label for="difficulty" class="block text-sm font-medium {theme.text} ">Difficulty:</label>
 				<input
-					type="url"
-					id="url"
-					bind:value={formData.url}
-					on:blur={() => validateField('url')}
+					type="difficulty"
+					id="difficulty"
+					bind:value={formData.difficulty}
+					on:blur={() => validateField('difficulty')}
 					class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 				/>
-				{#if errors.url}<span class="mt-1 text-sm text-red-500">{errors.url}</span>{/if}
+				{#if errors.difficulty}<span class="mt-1 text-sm text-red-500">{errors.difficulty}</span
+					>{/if} -->
 			</div>
 			<div>
 				<label for="url" class="block text-sm font-medium {theme.text} ">URL:</label>

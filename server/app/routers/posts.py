@@ -13,6 +13,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 @router.post("/", response_model=PostSchema, status_code=status.HTTP_201_CREATED)
 def create_post(post: PostCreate, db: Session = Depends(get_db)):
     db_post = Post(
+        number=post.number,
         url=post.url,
         title=post.title,
         description=post.description,
@@ -20,10 +21,13 @@ def create_post(post: PostCreate, db: Session = Depends(get_db)):
     )
     if post.input_constraints:
         db_post.input_constraints = [
-            InputConstraint(**ic.model_dump(), post=db_post) for ic in post.input_constraints
+            InputConstraint(**ic.model_dump(), post=db_post)
+            for ic in post.input_constraints
         ]
     if post.examples:
-        db_post.examples = [Example(**ex.model_dump(), post=db_post) for ex in post.examples]
+        db_post.examples = [
+            Example(**ex.model_dump(), post=db_post) for ex in post.examples
+        ]
     if post.topics:
         db_post.topics = db.query(Topic).filter(Topic.id.in_(post.topics)).all()
     db.add(db_post)
