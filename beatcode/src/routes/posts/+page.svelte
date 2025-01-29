@@ -13,27 +13,16 @@
 {#if data.error}
 	<p style="color: red;">Error: {data.error.message}</p>
 {:else if data.posts}
-	<PostsListing postsListingData={data.posts} />
-	<!-- <ul>
-		{#each data.posts as post}
-			<li>
-				<a href={`${base}/posts/${post.id}`}>
-					<h2>{post.title}</h2>
-					{#if post.subtitle}
-						<h3>{post.subtitle}</h3>
-					{/if}
-					{#if post.base64_image}
-						<img
-							src={`data:image/jpeg;base64,${post.base64_image}`}
-							alt={post.title}
-							style="max-width: 200px; max-height: 150px;"
-						/>
-					{/if}
-					<p>{post.content?.substring(0, 100)}...</p>
-				</a>
-			</li>
-		{/each}
-	</ul> -->
+	<div class="grid w-full grid-cols-[1fr_auto] gap-4">
+		<a
+			href="{base}/posts/create"
+			class="mr-5 justify-self-end font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+			>Create Post</a
+		>
+		<div class="col-span-2 w-full">
+			<PostsListing postsListingData={data.posts} />
+		</div>
+	</div>
 {:else}
 	<p>Loading posts...</p>
 {/if}

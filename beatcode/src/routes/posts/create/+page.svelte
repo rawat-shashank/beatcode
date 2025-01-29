@@ -1,16 +1,13 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { currentTheme } from '$lib/theme/ThemeManager';
 	import { themes } from '$lib/theme/themes';
-	import { isValidURL } from '$lib';
-	import { Difficulty } from '$lib/types';
+	import { currentTheme } from '$lib/theme/ThemeManager';
 	import Dropdown from '$components/Dropdown.svelte';
-	import type { SubmitFunction, ActionData } from './$types';
+	import { Difficulty } from '$lib/types.js';
+	import { isValidURL } from '$lib';
 
 	$: theme = themes[$currentTheme] || themes.default;
-	export let form: ActionData;
 
-	interface FormData {
+	type CreatePostType = {
 		number: string;
 		title: string;
 		url: string;
@@ -19,9 +16,20 @@
 		input_constraint: string[];
 		examples: string[];
 		topics: number[];
+	};
+
+	interface PostFormErrors {
+		number?: string;
+		title?: string;
+		url?: string;
+		description?: string;
+		difficulty?: string;
+		input_constraint?: string[];
+		examples?: string[];
+		topics?: number[];
 	}
 
-	let formData: FormData = {
+	const initialData: CreatePostType = {
 		number: '',
 		title: '',
 		url: '',
@@ -32,158 +40,169 @@
 		topics: []
 	};
 
-	let errors: { [key in keyof FormData]?: string } = {};
+	let loading = false;
+	let formData: CreatePostType = { ...initialData };
+	let errors: PostFormErrors = {};
 
-	function validateField(fieldName: keyof FormData) {
-		errors[fieldName] = undefined;
+	const handleSubmit = async (event: Event) => {
+		event.preventDefault();
+		errors = {};
 
-		switch (fieldName) {
-			case 'number':
-				if (!formData.number.trim()) {
-					errors.number = `${fieldName} is required.`;
-				} else if (isNaN(Number(formData.number))) {
-					errors[fieldName] = `${fieldName} must be a number.`;
-				} else if (parseFloat(formData.number) !== Number(formData.number)) {
-					errors[fieldName] = `${fieldName} must be a valid number.`;
-				} else if (!Number.isInteger(Number(formData.number))) {
-					errors[fieldName] = `${fieldName} must be a integer.`;
-				}
-				break;
-			case 'title':
-				if (!formData.title.trim()) {
-					errors.title = `${fieldName} is required.`;
-				} else if (formData.title.length < 3) {
-					errors.title = `${fieldName} must be at least 3 characters.`;
-				}
-				break;
-			case 'url':
-				if (!formData.url.trim()) {
-					errors.url = `${fieldName} is required.`;
-				} else if (!isValidURL(formData.url)) {
-					errors.url = `Invalid ${fieldName}`;
-				}
-				break;
-			case 'description':
-				if (!formData.description.trim()) {
-					errors.description = 'Description is required.';
-				}
-				break;
+		if (!formData.number.trim()) {
+			errors.number = 'Number is required.';
+		} else if (isNaN(Number(formData.number))) {
+			errors.number = 'Number must be a valid number.';
+		} else if (Number(formData.number) < 0) {
+			errors.number = 'Number must be positive.';
 		}
-	}
 
-	function handleDropdownSelect(difficulty: Difficulty) {
-		formData.difficulty = difficulty;
-	}
-
-	const handleSubmit: SubmitFunction = () => {
-		for (const field in formData) {
-			validateField(field as keyof FormData);
+		if (!formData.title.trim()) {
+			errors.title = 'Title is required.';
+		} else if (formData.title.length < 3) {
+			errors.title = 'Title must be at least 3 characters.';
 		}
-		return async ({ result, update }) => {
-			await update();
-			if (result.type === 'success') {
-				// Optionally reset the form
+
+		if (!formData.url.trim()) {
+			errors.url = 'URL is required.';
+		} else if (!isValidURL(formData.url)) {
+			errors.url = 'Invalid URL.';
+		}
+
+		if (!formData.description.trim()) {
+			errors.description = 'Description is required.';
+		}
+
+		if (Object.keys(errors).length > 0) {
+			return;
+		}
+
+		loading = true;
+		try {
+			const response = await fetch('http://localhost:8000/posts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(formData)
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				console.error('API Error', errorData);
+			} else {
+				formData = { ...initialData }; // Reset the form after successful submission
 			}
-			if (result.type === 'error') {
-				console.error(result.error.message);
-			}
-		};
+		} catch (error) {
+			console.error('Fetch error:', error);
+		} finally {
+			loading = false;
+		}
 	};
-
-	// function handleSubmit() {
-	// 	for (const field in formData) {
-	// 		validateField(field as keyof FormData);
-	// 	}
-
-	// 	// if (Object.keys(errors).length === 0) {
-	// 	// 	formData = { number: '', title: '', url: '', description: '', difficulty: Difficulty.Easy }; // Reset form
-	// 	// }
-
-	// 	// handle form submission
-	// }
 </script>
 
-<form method="POST" action="?/create" use:enhance={handleSubmit}>
-	<div class="grid grid-cols-[3fr_9fr] gap-4">
-		<div>
-			<label for="number" class="block text-sm font-medium {theme.text}">Number:</label>
-			<input
-				type="text"
-				id="number"
-				bind:value={formData.number}
-				on:blur={() => validateField('number')}
-				class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-			/>
-			{#if errors.number}<span class="mt-1 text-sm text-red-500">{errors.number}</span>{/if}
-		</div>
-		<div>
-			<label for="title" class="block text-sm font-medium {theme.text}">Title:</label>
-			<input
-				type="text"
-				id="title"
-				bind:value={formData.title}
-				on:blur={() => validateField('title')}
-				class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-			/>
-			{#if errors.title}<span class="mt-1 text-sm text-red-500">{errors.title}</span>{/if}
-		</div>
-	</div>
-
-	<div>
-		<label for="url" class="block text-sm font-medium {theme.text} ">URL:</label>
-		<input
-			type="url"
-			id="url"
-			bind:value={formData.url}
-			on:blur={() => validateField('url')}
-			class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-		/>
-		{#if errors.url}<span class="mt-1 text-sm text-red-500">{errors.url}</span>{/if}
-	</div>
-
-	<div class="grid grid-cols-2 gap-4">
-		<div class="min-h-full">
-			<label for="description" class="block text-sm font-medium {theme.text}">Description:</label>
-			<textarea
-				id="description"
-				bind:value={formData.description}
-				on:blur={() => validateField('description')}
-				rows="5"
-				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-			></textarea>
-			{#if errors.description}<span class="mt-1 text-sm text-red-500">{errors.description}</span
-				>{/if}
-		</div>
-		<div class="min-h-full">
-			<div>
-				<label for="difficulty" class="block text-sm font-medium {theme.text}">Difficulty:</label>
-				<Dropdown
-					id="difficulty"
-					items={Object.entries(Difficulty).map(([key, value]) => ({
-						name: key,
-						value: value
-					}))}
-					selected={formData.difficulty}
-					label="Select a fruit"
-					onSelect={handleDropdownSelect}
-				/>
-			</div>
-			<div>
-				<label for="topics" class="block text-sm font-medium {theme.text} ">Topics:</label>
-				<input
-					type="text"
-					id="topics"
-					bind:value={formData.topics}
-					class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-				/>
-			</div>
-		</div>
-	</div>
-
+<div class="grid grid-cols-[1fr_auto] gap-4">
 	<button
-		type="submit"
-		class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+		on:click={() => history.back()}
+		class="mr-5 justify-self-end font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+		>Back</button
 	>
-		Submit
-	</button>
-</form>
+
+	<div class="col-span-2">
+		<form on:submit={handleSubmit}>
+			<div class="grid grid-cols-[3fr_9fr] gap-4">
+				<div>
+					<label for="num" class="block text-sm font-medium {theme.text}">Number:</label>
+					<input
+						type="text"
+						id="num"
+						name="num"
+						bind:value={formData.number}
+						class:border-red-500={errors?.number}
+						class="mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+					/>
+					{#if errors?.number}<span class="mt-1 text-sm text-red-500">{errors.number}</span>{/if}
+				</div>
+				<div>
+					<label for="title" class="block text-sm font-medium {theme.text}">Title:</label>
+					<input
+						type="text"
+						id="title"
+						name="title"
+						bind:value={formData.title}
+						class:border-red-500={errors?.title}
+						class="mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+					/>
+					{#if errors?.title}<span class="mt-1 text-sm text-red-500">{errors.title}</span>{/if}
+				</div>
+			</div>
+
+			<div>
+				<label for="url" class="block text-sm font-medium {theme.text} ">URL:</label>
+				<input
+					type="url"
+					id="url"
+					name="url"
+					bind:value={formData.url}
+					class:border-red-500={errors?.url}
+					class="mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+				/>
+				{#if errors?.url}<span class="mt-1 text-sm text-red-500">{errors.url}</span>{/if}
+			</div>
+
+			<div class="grid grid-cols-2 gap-4">
+				<div class="min-h-full">
+					<label for="description" class="block text-sm font-medium {theme.text}"
+						>Description:</label
+					>
+					<textarea
+						id="description"
+						name="description"
+						bind:value={formData.description}
+						rows="5"
+						class:border-red-500={errors?.description}
+						class="mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+					></textarea>
+					{#if errors?.description}<span class="mt-1 text-sm text-red-500"
+							>{errors.description}</span
+						>{/if}
+				</div>
+				<div class="min-h-full">
+					<div>
+						<label for="difficulty" class="block text-sm font-medium {theme.text}"
+							>Difficulty:</label
+						>
+						<Dropdown
+							id="difficulty"
+							items={Object.entries(Difficulty).map(([key, value]) => ({
+								name: key,
+								value: value
+							}))}
+							selected={formData.difficulty}
+						/>
+					</div>
+					<div>
+						<label for="topics" class="block text-sm font-medium {theme.text} ">Topics:</label>
+						<input
+							type="text"
+							id="topics"
+							bind:value={formData.topics}
+							class="mt-1 block w-full rounded-md border border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<button
+				type="submit"
+				disabled={loading}
+				class="mt-1 inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+			>
+				{#if loading}
+					Submitting...
+				{:else}
+					Submit
+				{/if}
+			</button>
+		</form>
+	</div>
+</div>

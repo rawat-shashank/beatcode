@@ -16,7 +16,7 @@
 				<!-- <div class="px-4 py-3">
 					<Search />
 				</div> -->
-				<div class="overflow-hidden">
+				<div>
 					<Table rows={postsListingData} />
 				</div>
 				<!-- <div class="px-4 py-1">

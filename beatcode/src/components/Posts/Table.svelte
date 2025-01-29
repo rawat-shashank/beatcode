@@ -8,7 +8,7 @@
 <table class="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
 	<thead class="bg-gray-50 dark:bg-neutral-700">
 		<tr>
-			<th scope="col" class="px-4 py-3 pe-0">
+			<!-- <th scope="col" class="px-4 py-3 pe-0">
 				<div class="flex h-5 items-center">
 					<input
 						id="hs-table-pagination-checkbox-all"
@@ -17,7 +17,7 @@
 					/>
 					<label for="hs-table-pagination-checkbox-all" class="sr-only">Checkbox</label>
 				</div>
-			</th>
+			</th> -->
 			<th
 				scope="col"
 				class="px-6 py-3 text-start text-xs font-medium uppercase text-gray-500 dark:text-neutral-500"
@@ -43,7 +43,7 @@
 	<tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
 		{#each rows as row}
 			<tr>
-				<td class="py-3 ps-4">
+				<!-- <td class="py-3 ps-4">
 					<div class="flex h-5 items-center">
 						<input
 							id="hs-table-pagination-checkbox-1"
@@ -52,7 +52,7 @@
 						/>
 						<label for="hs-table-pagination-checkbox-1" class="sr-only">Checkbox</label>
 					</div>
-				</td>
+				</td> -->
 				<td
 					class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-800 dark:text-neutral-200"
 					>{row.title}</td
